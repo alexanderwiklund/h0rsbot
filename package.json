@@ -1,0 +1,19 @@
+{
+  "name": "h0rsbot",
+  "version": "0.0.1",
+  "description": "h0rsbot, bringer of h0rs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "h0rs"
+  ],
+  "author": "h0rs",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/client": "^3.4.0",
+    "node-env-file": "^0.1.8",
+    "request": "^2.72.0"
+  }
+}
