@@ -44,14 +44,23 @@ exports.magicCardTest = function magicCardTest(message) {
 						console.log(e);
 						return resolve('Error parsing API response: ' +  e.message ? e.message : '')
 					}
+				let imgLink = "";
+				if (parsedBody.editions) {
+	  				for (var i=0; i<parsedBody.editions.length; i++) {
+	    					var img = parsedBody.editions[i].image_url;
+	    					if (img.indexOf("multiverseid/0.jpg") == -1) {
+	      						imgLink = img;
+	    					}
+	  				}
+				}
 		        	
-		        	if (!parsedBody || !parsedBody.name || !parsedBody.text || !parsedBody.editions || !parsedBody.editions.length > 0) {
+		        	if (!parsedBody || !parsedBody.name || !parsedBody.text) {
 		        		return resolve('h0rsbot does not like this card.')
 		        	}
 
 		        	let text = dedent(`*Card name:* ${parsedBody.name}
 					*Text:* ${parsedBody.text}
-					*Image:* ${parsedBody.editions[parsedBody.editions.length-1].image_url}`)
+					*Image:* ${imgLink}`)
 					return resolve(text)
 		        }
 		        else {
