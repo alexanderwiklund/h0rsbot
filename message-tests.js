@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var exports = module.exports = {}
 
@@ -27,7 +27,7 @@ exports.magicCardTest = function magicCardTest(message) {
 			const cardInfo = magicCardTest.exec(message.text)
 			const cardName = cardInfo[1] //Second entry in the array is the extracted string.
 
-			let mtgApiPath = "https://api.deckbrew.com/mtg/cards?name="
+			let mtgApiPath = 'https://api.deckbrew.com/mtg/cards?name='
 	  		let apiCardpath = mtgApiPath + cardName
 
 			request.get(apiCardpath, (err, result, body) => {

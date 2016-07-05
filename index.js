@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 const env = require('node-env-file')(__dirname + '/.env') //Load environment variables from file.
 const messageTests = require('./message-tests') //All message tests with regexes are contained in this file.
@@ -28,7 +28,7 @@ client.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {})
 client.on(RTM_EVENTS.MESSAGE, function (message) {
 	messageTests.testAll(message)
 	.then((results) => {
-		results.filter((result) => result.status === "resolved")
+		results.filter((result) => result.status === 'resolved')
 		.forEach((elem) => client.sendMessage(elem.result, GENERAL_CHANNEL_ID, () => console.log('Message sent.')))
 	})
 })
