@@ -29,6 +29,15 @@ client.on(RTM_EVENTS.MESSAGE, function (message) {
 	messageTests.testAll(message)
 	.then((results) => {
 		results.filter((result) => result.status === 'resolved')
-		.forEach((elem) => client.sendMessage(elem.result, GENERAL_CHANNEL_ID, () => console.log('Message sent.')))
+		.forEach((testResult) => {
+			console.log(testResult)
+			if (testResult.result.length) {
+				testResult.result.forEach(result => client.sendMessage(result, GENERAL_CHANNEL_ID, () => console.log('Message sent.')))
+			}
+			else {
+				client.sendMessage(testResult.result, GENERAL_CHANNEL_ID, () => console.log('Message sent.'))
+			}
+			
+		})
 	})
 })

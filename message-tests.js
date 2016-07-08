@@ -15,69 +15,79 @@ exports.testAll = function testAll(message) {
 }
 
 exports.magicCardTest = function magicCardTest(message) {
+
+	let getCardInfo = cardName => new Promise((resolve, reject) => {
+		const mtgApiPath = 'https://api.deckbrew.com/mtg/cards?name='
+		const apiCardpath = mtgApiPath + cardName
+
+		request.get(apiCardpath, (err, result, body) => {
+			if (err) {
+	        	console.log(err)
+	        	return reject('API request returned an error.')
+	      	}
+	      	else if (result.statusCode == 200) {
+	      		let parsedBody
+	      		try {
+	      			parsedBody = JSON.parse(body)
+	      		}
+	      		catch (e) {
+					console.log(e)
+					return reject('Error parsing API response: ' +  e.message ? e.message : '')
+				}
+
+				if (parsedBody.length) parsedBody = parsedBody[0] //We want the first result.
+				else return reject('No result returned for this card.')
+
+				let imgLink = ""
+				if (parsedBody && parsedBody.editions) {
+	  				for (let i=0; i<parsedBody.editions.length; i++) {
+    					let img = parsedBody.editions[i].image_url
+    					if (img.indexOf("multiverseid/0.jpg") == -1) {
+      						imgLink = img
+    					}
+	  				}
+				}
+
+				return resolve(imgLink)
+	        }
+	        else {
+	        	let parsedBody
+	      		try {
+	      			parsedBody = JSON.parse(body)[0]
+	      		}
+	      		catch (e) {
+					console.log(e)
+					return resolve('Error parsing API response: ' +  e.message ? e.message : '')
+				}
+
+				if (parsedBody) {
+					let text = dedent(`Error:
+					${(parsedBody.errors && parsedBody.errors.length) ? parsedBody.errors.join('\n') : ''}`)
+	    			return resolve(text)
+				}
+				else return reject("An unknown API error was encountered.")
+	        }
+		})
+	})
+
 	return new Promise((resolve, reject) => {
 		if (!message || !message.text) {
 			return reject('No message received.')
 		}
 
 		console.log('Running Magic card test.')
-		const magicCardTest = /(?:\[\[)([^\n\r\[\]]+)(?:\]\])/;
+		const magicCardTest = /(?:\[\[)([^\n\r\[\]]+)(?:\]\])/g
 
-		if (magicCardTest.test(message.text)) {
-			const cardInfo = magicCardTest.exec(message.text)
-			const cardName = cardInfo[1] //Second entry in the array is the extracted string.
+		let cardPromises = []
+		for (let cardInfo = magicCardTest.exec(message.text); cardInfo != null; cardInfo = magicCardTest.exec(message.text)) {
+			console.log("Fetching " + cardInfo[1])
+			cardPromises.push(getCardInfo(cardInfo[1])) //Second entry in the array is the extracted string.
+		}
 
-			let mtgApiPath = 'https://api.deckbrew.com/mtg/cards?name='
-	  		let apiCardpath = mtgApiPath + cardName
-
-			request.get(apiCardpath, (err, result, body) => {
-				if (err) {
-		        	console.log(err)
-		        	return resolve('API request returned an error.')
-		      	}
-		      	else if (result.statusCode == 200) {
-		      		let parsedBody
-		      		try {
-		      			parsedBody = JSON.parse(body)[0]
-		      		}
-		      		catch (e) {
-						console.log(e);
-						return resolve('Error parsing API response: ' +  e.message ? e.message : '')
-					}
-				let imgLink = "";
-				if (parsedBody.editions) {
-	  				for (var i=0; i<parsedBody.editions.length; i++) {
-	    					var img = parsedBody.editions[i].image_url;
-	    					if (img.indexOf("multiverseid/0.jpg") == -1) {
-	      						imgLink = img;
-	    					}
-	  				}
-				}
-		        	
-		        	if (!parsedBody || !parsedBody.name || !parsedBody.text) {
-		        		return resolve('h0rsbot does not like this card.')
-		        	}
-
-		        	let text = dedent(`*Card name:* ${parsedBody.name}
-					*Text:* ${parsedBody.text}
-					*Image:* ${imgLink}`)
-					return resolve(text)
-		        }
-		        else {
-		        	let parsedBody
-		      		try {
-		      			parsedBody = JSON.parse(body)[0]
-		      		}
-		      		catch (e) {
-						console.log(e)
-						return resolve('Error parsing API response: ' +  e.message ? e.message : '')
-					}
-
-		        	let text = dedent(`Error:
-					${(parsedBody.errors && parsedBody.errors.length) ? parsedBody.errors.join('\n') : ''}`)
-		    		return resolve(text)
-		        }
-			});
+		if (cardPromises.length) {
+			let cardImages = Promise.all(cardPromises.map(reflect))
+			.then(result => result.filter(elem => elem.status === 'resolved').map(elem => elem.result))
+			return resolve(cardImages)
 		}
 		else {
 			return reject('Message did not pass magic card test.')
