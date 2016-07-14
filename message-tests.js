@@ -16,16 +16,21 @@ exports.testAll = function testAll(message) {
 
 exports.magicCardTest = function magicCardTest(message) {
 
+	//Function that takes a magic card name and tries to fetch the card image from the deckbrew API.
 	let getCardInfo = cardName => new Promise((resolve, reject) => {
 		const mtgApiPath = 'https://api.deckbrew.com/mtg/cards?name='
 		const apiCardpath = mtgApiPath + cardName
 
+		if (cardName === 'gitgud' || cardName === 'gitgud frog') {
+			return resolve('https://image.deckbrew.com/mtg/multiverseid/410010.jpg')
+		}
+
 		request.get(apiCardpath, (err, result, body) => {
-			if (err) {
+			if (err) { //Error connecting to API.
 	        	console.log(err)
 	        	return reject('API request returned an error.')
 	      	}
-	      	else if (result.statusCode == 200) {
+	      	else if (result.statusCode == 200) { //200 OK from API.
 	      		let parsedBody
 	      		try {
 	      			parsedBody = JSON.parse(body)
@@ -48,9 +53,11 @@ exports.magicCardTest = function magicCardTest(message) {
 	  				}
 				}
 
-				return resolve(imgLink)
+				if (imgLink !== "") return resolve(imgLink)
+				else return reject("No image found for card.")
+				
 	        }
-	        else {
+	        else { //Unexpected response, try to parse as error.
 	        	let parsedBody
 	      		try {
 	      			parsedBody = JSON.parse(body)[0]
@@ -76,12 +83,11 @@ exports.magicCardTest = function magicCardTest(message) {
 		}
 
 		console.log('Running Magic card test.')
-		const magicCardTest = /(?:\[\[)([^\n\r\[\]]+)(?:\]\])/g
+		const magicCardTest = /(?:\[\[)([^\n\r\[\]]+)(?:\]\])/g //Tests for [[STRING]] and returns only the STRING part
 
 		let cardPromises = []
 		for (let cardInfo = magicCardTest.exec(message.text); cardInfo != null; cardInfo = magicCardTest.exec(message.text)) {
-			console.log("Fetching " + cardInfo[1])
-			cardPromises.push(getCardInfo(cardInfo[1])) //Second entry in the array is the extracted string.
+			cardPromises.push(getCardInfo(cardInfo[1])) //Second entry in the regex result array is the extracted string.
 		}
 
 		if (cardPromises.length) {
